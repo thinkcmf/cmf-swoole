@@ -2,7 +2,7 @@
   "name": "thinkcmf/cmf-swoole",
   "description": "Swoole extend for ThinkCMF5.1",
   "license": "Apache-2.0",
-  "type": "think-extend",
+  "type": "cmf-extend",
   "authors": [
     {
       "name": "liu21st",
