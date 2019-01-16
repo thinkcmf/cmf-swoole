@@ -14,6 +14,7 @@ use Swoole\Http\Server as HttpServer;
 use Swoole\Table;
 use think\Facade;
 use think\facade\Config;
+use think\facade\Env;
 use think\Loader;
 use think\swoole\facade\Timer as TimerF;
 use think\Container;
@@ -31,7 +32,7 @@ class Http extends Server
     protected $table;
     protected $cachetable;
     protected $monitor;
-    protected $server_type;
+    protected $serverType;
     protected $lastMtime;
     protected $fieldType = [
         'int'    => Table::TYPE_INT,
@@ -51,8 +52,9 @@ class Http extends Server
      */
     public function __construct($host, $port, $mode = SWOOLE_PROCESS, $sockType = SWOOLE_SOCK_TCP)
     {
-        $this->server_type = Config::get('swoole.server_type');
-        switch ($this->server_type) {
+        $this->serverType = Config::get('swoole.server_type');
+
+        switch ($this->serverType) {
             case 'websocket':
                 $this->swoole = new WebSocketServer($host, $port, $mode, SWOOLE_SOCK_TCP);
                 break;
@@ -73,7 +75,7 @@ class Http extends Server
     public function setMonitor($interval = 2, $path = [])
     {
         $this->monitor['interval'] = $interval;
-        $this->monitor['path']     = (array) $path;
+        $this->monitor['path']     = (array)$path;
     }
 
     public function table(array $option)
@@ -118,7 +120,7 @@ class Http extends Server
                 $this->swoole->on($event, [$this, 'on' . $event]);
             }
         }
-        if ("websocket" == $this->server_type) {
+        if ("websocket" == $this->serverType) {
             foreach ($this->event as $event) {
                 if (method_exists($this, 'Websocketon' . $event)) {
                     $this->swoole->on($event, [$this, 'Websocketon' . $event]);
@@ -135,9 +137,10 @@ class Http extends Server
      */
     public function onWorkerStart($server, $worker_id)
     {
+        // 启用协程
+        \Swoole\Runtime::enableCoroutine();
         // 应用实例化
         $this->app       = new Application($this->appPath);
-        $this->lastMtime = time();
 
         //swoole server worker启动行为
         $hook = Container::get('hook');
@@ -169,6 +172,8 @@ class Http extends Server
 
         // 应用初始化
         $this->app->initialize();
+
+        $this->lastMtime = time();
 
         $this->app->bindTo([
             'cookie'  => Cookie::class,
@@ -213,7 +218,7 @@ class Http extends Server
      */
     protected function monitor($server)
     {
-        $paths = $this->monitor['path'] ?: [$this->app->getAppPath(), $this->app->getConfigPath()];
+        $paths = $this->monitor['path'] ?: [$this->app->getAppPath(), $this->app->getConfigPath(), cmf_core_path() . '../'];
         $timer = $this->monitor['interval'] ?: 2;
 
         $server->tick($timer, function () use ($paths, $server) {
@@ -228,9 +233,9 @@ class Http extends Server
 
                     if ($this->lastMtime < $file->getMTime()) {
                         $this->lastMtime = $file->getMTime();
-                        echo $this->lastMtime.'[update ]' . $file . " reload...\n";
+                        echo '[update]' . $file . " reload...\n";
                         $server->reload();
-                        return;
+                        break;
                     }
                 }
             }
@@ -284,11 +289,21 @@ class Http extends Server
     }
 
     /**
+     * Close
+     */
+    public function WebsocketonClose($server, $fd, $reactorId)
+    {
+        $data = [$server, $fd, $reactorId];
+        $hook = Container::get('hook');
+        $hook->listen('swoole_websocket_on_close', $data);
+    }
+
+    /**
      * 任务投递
      * @param HttpServer $serv
-     * @param $task_id
-     * @param $fromWorkerId
-     * @param $data
+     * @param            $task_id
+     * @param            $fromWorkerId
+     * @param            $data
      * @return mixed|null
      */
     public function onTask(HttpServer $serv, $task_id, $fromWorkerId, $data)
@@ -318,8 +333,8 @@ class Http extends Server
     /**
      * 任务结束，如果有自定义任务结束回调方法则不会触发该方法
      * @param HttpServer $serv
-     * @param $task_id
-     * @param $data
+     * @param            $task_id
+     * @param            $data
      */
     public function onFinish(HttpServer $serv, $task_id, $data)
     {
