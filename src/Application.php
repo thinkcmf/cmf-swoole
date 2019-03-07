@@ -45,33 +45,11 @@ class Application extends App
         }
         $this->chan->push(1);
         try {
-
-//            $users=Db::name('user')->select();
-//            echo "go start\n";
-//            $chan = new \chan(1);
-//            \go(function ()use($chan) {
-//                echo "co before select user \n";
-//                Db::name('user')->select();
-//                echo "co after select user \n";
-////                $chan->push(1);
-//            });
-//
-//            echo "go end\n";
-
-//            $chan->pop();
-
-
-            // 测试用代码
-//            $date = date('Y-m-d H:i:s');
-//            $this->chan->push($date);
-//            echo $date . "\Swoole\Coroutine::getuid():" . \Swoole\Coroutine::getuid() . "\n";
-//            \Swoole\Coroutine::sleep(10);
-//            echo $date . "this->chan->pop;\n";
-//            $date = $this->chan->pop();
             $uri = $request->server['request_uri'];
             if ($uri == '/favicon.ico') {
                 $response->status(404);
                 $response->end();
+                $this->chan->pop();
                 return;
             }
 
