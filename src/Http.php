@@ -140,7 +140,7 @@ class Http extends Server
         // 启用协程
         \Swoole\Runtime::enableCoroutine();
         // 应用实例化
-        $this->app       = new Application($this->appPath);
+        $this->app = new Application($this->appPath);
 
         //swoole server worker启动行为
         $hook = Container::get('hook');
@@ -170,15 +170,15 @@ class Http extends Server
             facade\Timer::class       => Timer::class,
         ]);
 
-        // 应用初始化
-        $this->app->initialize();
-
-        $this->lastMtime = time();
-
         $this->app->bindTo([
             'cookie'  => Cookie::class,
             'session' => Session::class,
         ]);
+
+        // 应用初始化
+        $this->app->initialize();
+
+        $this->lastMtime = time();
 
         $this->initServer($server, $worker_id);
 
@@ -223,6 +223,9 @@ class Http extends Server
 
         $server->tick($timer, function () use ($paths, $server) {
             foreach ($paths as $path) {
+                if (!file_exists($path)) {
+                    continue;
+                }
                 $dir      = new \RecursiveDirectoryIterator($path);
                 $iterator = new \RecursiveIteratorIterator($dir);
 
