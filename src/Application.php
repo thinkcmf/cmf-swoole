@@ -34,7 +34,7 @@ class Application extends App
     /**
      * 处理Swoole请求
      * @access public
-     * @param  \Swoole\Http\Request  $request
+     * @param  \Swoole\Http\Request $request
      * @param  \Swoole\Http\Response $response
      * @param  void
      */
@@ -87,7 +87,8 @@ class Application extends App
             }
 
             if (isset($_GET[$this->config->get('var_pathinfo')])) {
-                $server['path_info'] = $_GET[$this->config->get('var_pathinfo')];
+                $server['path_info']          = $_GET[$this->config->get('var_pathinfo')];
+                $request->server['path_info'] = $server['path_info'];
             }
 
             $_SERVER = array_change_key_case($server, CASE_UPPER);
