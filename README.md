@@ -4,8 +4,9 @@ ThinkCMF Swoole 扩展
 ## 更新日志
 
 ### 5.1.4-dev
-* 增加swoole_server_start,swoole_worker_start,swoole_websocket_on_close钩子配置
+* 增加`swoole_server_start`,`swoole_worker_start`,`swoole_websocket_on_open`,`swoole_websocket_on_close`钩子
 * 增加`WebSocket`独立运行命令
+* 增加`WebSocket onOpen`回调
 
 ### 5.1.3
 * 修复文件更改后worker重启后部分请求cookie报错

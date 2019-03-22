@@ -281,6 +281,18 @@ class Http extends Server
     }
 
     /**
+     * Open回调
+     * @param $server
+     * @param $frame
+     */
+    public function WebsocketonOpen($server, $request)
+    {
+        $data = [$server, $request];
+        $hook = Container::get('hook');
+        $hook->listen('swoole_websocket_on_open', $data);
+    }
+
+    /**
      * Message回调
      * @param $server
      * @param $frame
