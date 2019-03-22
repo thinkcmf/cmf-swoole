@@ -26,20 +26,20 @@ use think\Container;
 
 /**
  * Swoole HTTP 命令行，支持操作：start|stop|restart|reload
- * 支持应用配置目录下的swoole.php文件进行参数配置
+ * 支持应用配置目录下的swoole_ws.php文件进行参数配置
  */
-class Swoole extends Command
+class SwooleWs extends Command
 {
     protected $config = [];
 
     public function configure()
     {
-        $this->setName('swoole')
+        $this->setName('swoole:ws')
             ->addArgument('action', Argument::OPTIONAL, "start|stop|restart|reload", 'start')
             ->addOption('host', 'H', Option::VALUE_OPTIONAL, 'the host of swoole server.', null)
             ->addOption('port', 'p', Option::VALUE_OPTIONAL, 'the port of swoole server.', null)
             ->addOption('daemon', 'd', Option::VALUE_NONE, 'Run the swoole server in daemon mode.')
-            ->setDescription('Swoole HTTP Server for ThinkCMF');
+            ->setDescription('Swoole WebSocket Server for ThinkCMF');
     }
 
     public function execute(Input $input, Output $output)
@@ -59,7 +59,7 @@ class Swoole extends Command
     {
         $this->config = [
             'host'                  => '0.0.0.0', // 监听地址
-            'port'                  => 9501, // 监听端口
+            'port'                  => 9503, // 监听端口
             'mode'                  => '', // 运行模式 默认为SWOOLE_PROCESS
             'sock_type'             => '', // sock type 默认为SWOOLE_SOCK_TCP
             'server_type'           => 'websocket', // 服务类型 支持 http websocket
@@ -69,15 +69,15 @@ class Swoole extends Command
             'file_monitor_path'     => [], // 文件监控目录 默认监控application和config目录
 
             // 可以支持swoole的所有配置参数
-            'pid_file'              => Env::get('runtime_path') . 'swoole.pid',
-            'log_file'              => Env::get('runtime_path') . 'swoole.log',
+            'pid_file'              => Env::get('runtime_path') . 'swoole_ws.pid',
+            'log_file'              => Env::get('runtime_path') . 'swoole_ws.log',
             'document_root'         => Env::get('root_path') . 'public',
             'enable_static_handler' => true,
             'timer'                 => true,//是否开启系统定时器
             'interval'              => 500,//系统定时器 时间间隔
             'task_worker_num'       => 2,//swoole 任务工作进程数量,
         ];
-        $config       = Config::pull('swoole');
+        $config       = Config::pull('swoole_ws');
 
         if (!empty($this->config)) {
             $this->config = array_merge($this->config, $config);
@@ -86,7 +86,7 @@ class Swoole extends Command
         Config::set(['swoole' => $this->config]);
 
         if (empty($this->config['pid_file'])) {
-            $this->config['pid_file'] = Env::get('runtime_path') . 'swoole.pid';
+            $this->config['pid_file'] = Env::get('runtime_path') . 'swoole_ws.pid';
         }
 
         // 避免pid混乱
@@ -109,7 +109,7 @@ class Swoole extends Command
         if ($this->input->hasOption('port')) {
             $port = $this->input->getOption('port');
         } else {
-            $port = !empty($this->config['port']) ? $this->config['port'] : 9501;
+            $port = !empty($this->config['port']) ? $this->config['port'] : 9503;
         }
 
         return $port;
@@ -125,11 +125,11 @@ class Swoole extends Command
         $pid = $this->getMasterPid();
 
         if ($this->isRunning($pid)) {
-            $this->output->writeln('<error>swoole http server process is already running.</error>');
+            $this->output->writeln('<error>swoole websocket server process is already running.</error>');
             return false;
         }
 
-        $this->output->writeln('Starting swoole http server...');
+        $this->output->writeln('Starting swoole websocket server...');
 
         $host = $this->getHost();
         $port = $this->getPort();
@@ -173,7 +173,7 @@ class Swoole extends Command
         }
         $swoole->option($this->config);
 
-        $this->output->writeln("Swoole http server started: <http://{$host}:{$port}>");
+        $this->output->writeln("Swoole websocket server started: <http://{$host}:{$port}>");
         $this->output->writeln('You can exit with <info>`CTRL-C`</info>');
 
         $hook = Container::get('hook');
@@ -192,7 +192,7 @@ class Swoole extends Command
         $pid = $this->getMasterPid();
 
         if (!$this->isRunning($pid)) {
-            $this->output->writeln('<error>no swoole http server process running.</error>');
+            $this->output->writeln('<error>no swoole websocket server process running.</error>');
             return false;
         }
 
@@ -211,11 +211,11 @@ class Swoole extends Command
         $pid = $this->getMasterPid();
 
         if (!$this->isRunning($pid)) {
-            $this->output->writeln('<error>no swoole http server process running.</error>');
+            $this->output->writeln('<error>no swoole websocket server process running.</error>');
             return false;
         }
 
-        $this->output->writeln('Stopping swoole http server...');
+        $this->output->writeln('Stopping swoole websocket server...');
 
         Process::kill($pid, SIGTERM);
         $this->removePid();
