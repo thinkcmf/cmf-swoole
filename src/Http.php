@@ -34,6 +34,7 @@ class Http extends Server
     protected $monitor;
     protected $serverType;
     protected $lastMtime;
+    protected $chan;
     protected $fieldType = [
         'int'    => Table::TYPE_INT,
         'string' => Table::TYPE_STRING,
@@ -137,6 +138,7 @@ class Http extends Server
      */
     public function onWorkerStart($server, $worker_id)
     {
+        $this->chan = new  \chan(1);
         // 启用协程
         \Swoole\Runtime::enableCoroutine();
         // 应用实例化
@@ -276,8 +278,10 @@ class Http extends Server
      */
     public function onRequest($request, $response)
     {
+        $this->chan->push(1);
         // 执行应用并响应
         $this->app->swoole($request, $response);
+        $this->chan->pop();
     }
 
     /**
@@ -287,9 +291,11 @@ class Http extends Server
      */
     public function WebsocketonOpen($server, $request)
     {
+        $this->chan->push(1);
         $data = [$server, $request];
         $hook = Container::get('hook');
         $hook->listen('swoole_websocket_on_open', $data);
+        $this->chan->pop();
     }
 
     /**
@@ -299,8 +305,10 @@ class Http extends Server
      */
     public function WebsocketonMessage($server, $frame)
     {
+        $this->chan->push(1);
         // 执行应用并响应
         $this->app->swooleWebSocket($server, $frame);
+        $this->chan->pop();
     }
 
     /**
@@ -308,9 +316,11 @@ class Http extends Server
      */
     public function WebsocketonClose($server, $fd, $reactorId)
     {
+        $this->chan->push(1);
         $data = [$server, $fd, $reactorId];
         $hook = Container::get('hook');
         $hook->listen('swoole_websocket_on_close', $data);
+        $this->chan->pop();
     }
 
     /**

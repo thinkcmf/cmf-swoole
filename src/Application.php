@@ -25,11 +25,6 @@ use think\facade\Env;
  */
 class Application extends App
 {
-    // 请求控制 chan
-    private $chan = null;
-
-    // Websocket请求控制 chan
-    private $wsChan = null;
 
     /**
      * 处理Swoole请求
@@ -40,10 +35,6 @@ class Application extends App
      */
     public function swoole(Request $request, Response $response)
     {
-        if (empty($this->chan)) {
-            $this->chan = new \chan(1);
-        }
-        $this->chan->push(1);
         try {
             $uri = $request->server['request_uri'];
             if ($uri == '/favicon.ico') {
@@ -151,15 +142,10 @@ class Application extends App
             $this->exception($response, $e);
         }
 
-        $this->chan->pop();
     }
 
     public function swooleWebSocket($server, $frame)
     {
-        if (empty($this->wsChan)) {
-            $this->wsChan = new \chan(1);
-        }
-        $this->wsChan->push(1);
         try {
             // 重置应用的开始时间和内存占用
             $this->beginTime = microtime(true);
@@ -211,7 +197,6 @@ class Application extends App
         } catch (\Throwable $e) {
             $this->webSocketException($server, $frame, $e);
         }
-        $this->wsChan->pop();
     }
 
     protected function exception($response, $e)
