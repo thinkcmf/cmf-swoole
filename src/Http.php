@@ -180,6 +180,13 @@ class Http extends Server
         // 应用初始化
         $this->app->initialize();
 
+        // 模块初始化
+        $appNamespace = $this->app->getNamespace();
+        $modules      = cmf_scan_dir(CMF_ROOT . $appNamespace . '/*', GLOB_ONLYDIR);
+        foreach ($modules as $module) {
+            $this->app->init($module);
+        }
+
         $this->lastMtime = time();
 
         $this->initServer($server, $worker_id);
@@ -192,6 +199,8 @@ class Http extends Server
         if (0 == $worker_id) {
             $this->timer($server);
         }
+
+
     }
 
     /**
