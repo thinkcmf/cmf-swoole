@@ -8,6 +8,7 @@ ThinkCMF Swoole 扩展
 * 增加`WebSocket`独立运行命令
 * 增加`WebSocket onOpen`回调
 * 修复`WebSocket`事件引起的数据库执行报错
+* 修复`WebSocket`发送消息未判断是否为`WebSocket`连接
 
 ### 5.1.3
 * 修复文件更改后worker重启后部分请求cookie报错

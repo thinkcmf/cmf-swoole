@@ -5,6 +5,7 @@
  * email:49987958@qq.com
  * 可以配合https://github.com/xavieryang007/xavier-swoole/blob/master/src/example/websocketclient.js 使用
  */
+
 namespace think\swoole;
 
 use think\Container;
@@ -21,8 +22,8 @@ class WebSocketFrame implements \ArrayAccess
         $this->server = $server;
         $this->data   = null;
         if (!empty($frame)) {
-            $this->frame  = $frame;
-            $this->data   = json_decode($this->frame->data, true);
+            $this->frame = $frame;
+            $this->data  = json_decode($this->frame->data, true);
         }
     }
 
@@ -81,6 +82,10 @@ class WebSocketFrame implements \ArrayAccess
 
     public function sendToClient($fd, $data)
     {
+        if (!$this->server->isEstablished($fd)) {
+            return;
+        }
+
         if (is_string($data)) {
             $this->server->push($fd, $data);
         } elseif (is_array($data)) {
