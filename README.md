@@ -88,6 +88,11 @@ php think swoole:api   restart
 php think swoole:api    reload
 ```
 
+## 项目案例
+### ThinkCMF WebSocket Demo:
+WebSocket演示插件 http://thinkcmf.yyw66.cn/ws.html 
+
+
 ## 更新日志
 
 ### 5.1.4
