@@ -2,7 +2,10 @@ ThinkCMF Swoole 扩展
 ===============
 本扩展是基于`topthink/think-swoole`优化，方便ThinkCMF用户快速使用上swoole，原则上你可以使用相同的代码同时支持`PHP-FPM`和`Swoole`。 它让你的项目同时拥有swoole的高性能和ThinkPHP快速开发的特性，你可以开发高性能的API服务，也可以拥有 websocket。
 ## 安装 swoole
-详细的 swoole安装可以参数 swoole官方文档，https://wiki.swoole.com/wiki/page/6.html
+详细的 swoole安装可以参考swoole官方文档，https://wiki.swoole.com/wiki/page/6.html
+
+## 安装 ThinkCMF
+详细的ThinkCMF安装可以参考ThinkCMF安装文档，https://www.kancloud.cn/thinkcmf/doc5_1/957743
 
 ## 安装 cmf-swoole扩展
 ```
