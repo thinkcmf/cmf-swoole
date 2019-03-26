@@ -1,5 +1,6 @@
 ThinkCMF Swoole 扩展
 ===============
+本扩展是基于`topthink/think-swoole`优化，方便ThinkCMF用户快速使用swoole运行自己的项目。原则上你可以使用相同的代码同时支持`PHP-FPM`和`Swoole`
 ## 安装 swoole
 详细的 swoole安装可以参数 swoole官方文档，https://wiki.swoole.com/wiki/page/6.html
 
@@ -15,7 +16,7 @@ php think swoole
 swoole启动后会输出如下内容：
 ```
 Starting swoole http server...
-Swoole http server started: &lt;http://0.0.0.0:9501&gt;
+Swoole http server started: http://0.0.0.0:9501;
 You can exit with `CTRL-C`
 ```
 此时 swoole就启动成功了！
