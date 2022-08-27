@@ -1,5 +1,5 @@
-.idea
 .DS_Store
-*.xml
-.idea/think-swoole.iml
+.idea
 composer.lock
+vendor
+.phpunit.result.cache

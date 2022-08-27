@@ -11,153 +11,52 @@
 
 namespace think\swoole\command;
 
-use Swoole\Process;
-use think\console\input\Argument;
+use think\console\Command;
 use think\console\input\Option;
-use think\facade\Config;
-use think\facade\Env;
-use think\swoole\Server as ThinkServer;
+use think\swoole\Manager;
 
-/**
- * Swoole 命令行，支持操作：start|stop|restart|reload
- * 支持应用配置目录下的swoole_server.php文件进行参数配置
- */
-class Server extends Swoole
+class Server extends Command
 {
     public function configure()
     {
-        $this->setName('swoole:server')
-            ->addArgument('action', Argument::OPTIONAL, "start|stop|restart|reload", 'start')
-            ->addOption('host', 'H', Option::VALUE_OPTIONAL, 'the host of swoole server.', null)
-            ->addOption('port', 'p', Option::VALUE_OPTIONAL, 'the port of swoole server.', null)
-            ->addOption('daemon', 'd', Option::VALUE_NONE, 'Run the swoole server in daemon mode.')
+        $this->setName('swoole')
+            ->addOption(
+                'env',
+                'E',
+                Option::VALUE_REQUIRED,
+                'Environment name',
+                ''
+            )
             ->setDescription('Swoole Server for ThinkPHP');
     }
 
-    protected function init()
+    public function handle(Manager $manager)
     {
-        $this->config = Config::pull('swoole_server');
-
-        if (empty($this->config['pid_file'])) {
-            $this->config['pid_file'] = Env::get('runtime_path') . 'swoole_server.pid';
-        }
-
-        // 避免pid混乱
-        $this->config['pid_file'] .= '_' . $this->getPort();
-    }
-
-    /**
-     * 启动server
-     * @access protected
-     * @return void
-     */
-    protected function start()
-    {
-        $pid = $this->getMasterPid();
-
-        if ($this->isRunning($pid)) {
-            $this->output->writeln('<error>swoole server process is already running.</error>');
-            return false;
-        }
+        $this->checkEnvironment();
 
         $this->output->writeln('Starting swoole server...');
 
-        if (!empty($this->config['swoole_class'])) {
-            $class = $this->config['swoole_class'];
+        $this->output->writeln('You can exit with <info>`CTRL-C`</info>');
 
-            if (class_exists($class)) {
-                $swoole = new $class;
-                if (!$swoole instanceof ThinkServer) {
-                    $this->output->writeln("<error>Swoole Server Class Must extends \\think\\swoole\\Server</error>");
-                    return false;
-                }
-            } else {
-                $this->output->writeln("<error>Swoole Server Class Not Exists : {$class}</error>");
-                return false;
-            }
-        } else {
-            $host     = $this->getHost();
-            $port     = $this->getPort();
-            $type     = !empty($this->config['type']) ? $this->config['type'] : 'socket';
-            $mode     = !empty($this->config['mode']) ? $this->config['mode'] : SWOOLE_PROCESS;
-            $sockType = !empty($this->config['sock_type']) ? $this->config['sock_type'] : SWOOLE_SOCK_TCP;
-
-            switch ($type) {
-                case 'socket':
-                    $swooleClass = 'Swoole\Websocket\Server';
-                    break;
-                case 'http':
-                    $swooleClass = 'Swoole\Http\Server';
-                    break;
-                default:
-                    $swooleClass = 'Swoole\Server';
-            }
-
-            $swoole = new $swooleClass($host, $port, $mode, $sockType);
-
-            // 开启守护进程模式
-            if ($this->input->hasOption('daemon')) {
-                $this->config['daemonize'] = true;
-            }
-
-            foreach ($this->config as $name => $val) {
-                if (0 === strpos($name, 'on')) {
-                    $swoole->on(substr($name, 2), $val);
-                    unset($this->config[$name]);
-                }
-            }
-
-            // 设置服务器参数
-            $swoole->set($this->config);
-
-            $this->output->writeln("Swoole {$type} server started: <{$host}:{$port}>");
-            $this->output->writeln('You can exit with <info>`CTRL-C`</info>');
-
-            // 启动服务
-            $swoole->start();
-        }
+        $envName = $this->input->getOption('env');
+        $manager->start($envName);
     }
 
     /**
-     * 柔性重启server
-     * @access protected
-     * @return void
+     * 检查环境
      */
-    protected function reload()
+    protected function checkEnvironment()
     {
-        // 柔性重启使用管理PID
-        $pid = $this->getMasterPid();
+        if (!extension_loaded('swoole')) {
+            $this->output->error('Can\'t detect Swoole extension installed.');
 
-        if (!$this->isRunning($pid)) {
-            $this->output->writeln('<error>no swoole server process running.</error>');
-            return false;
+            exit(1);
         }
 
-        $this->output->writeln('Reloading swoole server...');
-        Process::kill($pid, SIGUSR1);
-        $this->output->writeln('> success');
-    }
+        if (!version_compare(swoole_version(), '4.6.0', 'ge')) {
+            $this->output->error('Your Swoole version must be higher than `4.6.0`.');
 
-    /**
-     * 停止server
-     * @access protected
-     * @return void
-     */
-    protected function stop()
-    {
-        $pid = $this->getMasterPid();
-
-        if (!$this->isRunning($pid)) {
-            $this->output->writeln('<error>no swoole server process running.</error>');
-            return false;
+            exit(1);
         }
-
-        $this->output->writeln('Stopping swoole server...');
-
-        Process::kill($pid, SIGTERM);
-        $this->removePid();
-
-        $this->output->writeln('> success');
     }
-
 }
